@@ -2,6 +2,9 @@ from neural_network import NeuralNetwork
 from formulae import calculate_average_error, seed_random_number_generator
 from video import generate_writer, annotate_frame, take_still
 import parameters
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+from tqdm import tqdm
 
 
 class TrainingExample():
@@ -16,7 +19,10 @@ if __name__ == "__main__":
 
     # Assemble a neural network, with 3 neurons in the first layer
     # 4 neurons in the second layer and 1 neuron in the third layer
-    network = NeuralNetwork([3, 4, 1])
+    layer_counts = [3, 5, 3, 4, 1]
+    parameters.calc_area(layer_counts)
+
+    network = NeuralNetwork(layer_counts)
 
     # Training set
     examples = [TrainingExample([0, 0, 1], 0),
@@ -28,40 +34,45 @@ if __name__ == "__main__":
                 TrainingExample([0, 0, 0], 0)]
 
     # Create a video and image writer
-    fig, writer = generate_writer()
+    fig, ax = plt.subplots(figsize=(19.2, 10.80), dpi=100)
+    ax.set_aspect('equal')
+
+    fig,ax, writer = generate_writer(fig, ax, layer_counts)
 
     # Generate an image of the neural network before training
-    print "Generating an image of the neural network before"
+    print("Generating an image of the neural network before")
     network.do_not_think()
-    network.draw()
+    network.draw(ax)
+    plt.show()
     take_still("neural_network_before.png")
 
     # Generate a video of the neural network learning
-    print "Generating a video of the neural network learning."
-    print "There will be " + str(len(examples) * len(parameters.show_iterations)) + " frames."
-    print "This may take a long time. Please wait..."
-    with writer.saving(fig, parameters.video_file_name, 100):
+    print("Generating a video of the neural network learning.")
+    print("There will be " + str(len(examples) * len(parameters.show_iterations)) + " frames.")
+    print("This may take a long time. Please wait...")
+    with writer.saving(fig, parameters.video_file_name, 300):
         for i in range(1, parameters.training_iterations + 1):
             cumulative_error = 0
             for e, example in enumerate(examples):
                 cumulative_error += network.train(example)
                 if i in parameters.show_iterations:
-                    network.draw()
+                    network.draw(ax)
+                    # if parameters.annotate:
                     annotate_frame(i, e, average_error, example)
                     writer.grab_frame()
             average_error = calculate_average_error(cumulative_error, len(examples))
-    print "Success! Open the file " + parameters.video_file_name + " to view the video."
+    print("Success! Open the file " + parameters.video_file_name + " to view the video.")
 
     # Generate an image of the neural network after training
-    print "Generating an image of the neural network after"
+    print("Generating an image of the neural network after")
     network.do_not_think()
-    network.draw()
+    network.draw(ax)
     take_still("neural_network_after.png")
 
     # Consider a new situation
     new_situation = [1, 1, 0]
-    print "Considering a new situation " + str(new_situation) + "?"
-    print network.think(new_situation)
-    network.draw()
+    print("Considering a new situation " + str(new_situation) + "?")
+    print(network.think(new_situation))
+    network.draw(ax)
     take_still("neural_network_new_situation.png")
 

@@ -1,8 +1,7 @@
-import matplotlib
-matplotlib.use("Agg")
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
+# matplotlib.use("Agg")
 from math import fabs
-from formulae import sigmoid, sigmoid_derivative, random_weight, get_synapse_colour, adjust_line_to_perimeter_of_circle, layer_left_margin
+from formulae import sigmoid, sigmoid_derivative, random_weight, get_synapse_colour, adjust_line_to_perimeter_of_circle, layer_y_margin
 import parameters
 
 
@@ -17,11 +16,18 @@ class Synapse():
         self.y1 = y1
         self.y2 = y2
 
-    def draw(self):
-        line = pyplot.Line2D((self.x1, self.x2), (self.y1, self.y2), lw=fabs(self.weight), color=get_synapse_colour(self.weight), zorder=1)
-        outer_glow = pyplot.Line2D((self.x1, self.x2), (self.y1, self.y2), lw=(fabs(self.weight) * 2), color=get_synapse_colour(self.weight), zorder=2, alpha=self.signal * 0.4)
-        pyplot.gca().add_line(line)
-        pyplot.gca().add_line(outer_glow)
+    def draw(self, ax):
+        line = plt.Line2D((self.x1, self.x2), 
+                          (self.y1, self.y2), 
+                          lw=fabs(self.weight*parameters.synapse_width_scale), 
+                          color=get_synapse_colour(self.weight), zorder=1)
+        outer_glow = plt.Line2D((self.x1, self.x2), 
+                                (self.y1, self.y2), 
+                                lw=(fabs(self.weight) * 2), 
+                                color=get_synapse_colour(self.weight), 
+                                zorder=2, alpha=self.signal * 0.4)
+        ax.add_line(line)
+        ax.add_line(outer_glow)
 
 
 class Neuron():
@@ -53,14 +59,24 @@ class Neuron():
             activity += synapse.weight * synapse.signal
         self.output = sigmoid(activity)
 
-    def draw(self):
-        circle = pyplot.Circle((self.x, self.y), radius=parameters.neuron_radius, fill=True, color=(0.2, 0.2, 0), zorder=3)
-        outer_glow = pyplot.Circle((self.x, self.y), radius=parameters.neuron_radius * 1.5, fill=True, color=(self.output, self.output, 0), zorder=4, alpha=self.output * 0.5)
-        pyplot.gca().add_patch(circle)
-        pyplot.gca().add_patch(outer_glow)
-        pyplot.text(self.x + 0.8, self.y, round(self.output, 2))
+    def draw(self, ax):
+        circle = plt.Circle((self.x, self.y), 
+                               radius=parameters.neuron_radius, 
+                               fill=True, color=(0.2, 0.2, 0), 
+                               zorder=3)
+        outer_glow = plt.Circle((self.x, self.y), 
+                                   radius=parameters.neuron_radius * 1.5, 
+                                   fill=True, 
+                                   color=(self.output, self.output, 0), zorder=4, alpha=self.output * 0.5)
+        
+
+        ax.add_patch(circle)
+        ax.add_patch(outer_glow)
+        if parameters.annotate:
+            ax.text(self.x + 0.8, self.y, round(self.output, 2))
+
         for synapse in self.synapses:
-            synapse.draw()
+            synapse.draw(ax)
 
 
 class Layer():
@@ -68,25 +84,27 @@ class Layer():
         if len(network.layers) > 0:
             self.is_input_layer = False
             self.previous_layer = network.layers[-1]
-            self.y = self.previous_layer.y + parameters.vertical_distance_between_layers
+            self.y = self.previous_layer.y + parameters.distance_between_layers
         else:
             self.is_input_layer = True
             self.previous_layer = None
-            self.y = parameters.bottom_margin
+            self.y = parameters.x_margin
         self.neurons = []
-        x = layer_left_margin(number_of_neurons)
-        for iteration in xrange(number_of_neurons):
-            neuron = Neuron(x, self.y, self.previous_layer)
+        x = layer_y_margin(number_of_neurons)
+        # x = parameters.y_margin
+        for iteration in range(number_of_neurons):
+            # neuron = Neuron(x, self.y, self.previous_layer)
+            neuron = Neuron(self.y, x, self.previous_layer)
             self.neurons.append(neuron)
-            x += parameters.horizontal_distance_between_neurons
+            x += parameters.distance_within_layer
 
     def think(self):
         for neuron in self.neurons:
             neuron.think(self.previous_layer)
 
-    def draw(self):
+    def draw(self,ax):
         for neuron in self.neurons:
-            neuron.draw()
+            neuron.draw(ax)
 
 
 class NeuralNetwork():
@@ -120,10 +138,15 @@ class NeuralNetwork():
                 layer.think()
         return self.layers[-1].neurons[0].output
 
-    def draw(self):
-        pyplot.cla()
+    def draw(self,ax):
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        plt.cla()
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
         for layer in self.layers:
-            layer.draw()
+            layer.draw(ax)
+        # plt.show()
 
     def reset_errors(self):
         for layer in self.layers:
