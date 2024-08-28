@@ -4,7 +4,7 @@ from video import generate_writer, annotate_frame, take_still
 import parameters
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
-from tqdm import tqdm
+from tqdm import trange
 
 
 class TrainingExample():
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     print("There will be " + str(len(examples) * len(parameters.show_iterations)) + " frames.")
     print("This may take a long time. Please wait...")
     with writer.saving(fig, parameters.video_file_name, 300):
-        for i in range(1, parameters.training_iterations + 1):
+        for i in trange(1, parameters.training_iterations + 1):
             cumulative_error = 0
             for e, example in enumerate(examples):
                 cumulative_error += network.train(example)

@@ -1,3 +1,8 @@
+> CBCG notes:
+> Tweaked somewhat to use Python 3.x and more recent Matplotlib 3.5
+>
+> Modified some cosmetics too.
+
 # Neural Network Animation
 Watch a neural network think. Written in Python.
 

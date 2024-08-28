@@ -57,7 +57,11 @@ def error_bar(average_error,i):
         pyplot.gca().add_patch(time_border)
         time_rectangle = pyplot.Rectangle((parameters.error_bar_x_position, parameters.height - 5), 10 * i / parameters.training_iterations, 1, color='blue')
         pyplot.gca().add_patch(time_rectangle)
-        pyplot.text(parameters.error_bar_x_position, parameters.height - 6, "Training iterations")
+
+        iteration_string = 'Iterations'
+        if parameters.annotate:
+            iteration_string += f"#{i}"
+        pyplot.text(parameters.error_bar_x_position, parameters.height - 6, iteration_string)
 
 
 def take_still(image_file_name):
